@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Chat conmigo</title>
+  <title>ChatMe</title>
   <style>
     * {
       box-sizing: border-box;
@@ -13,15 +13,14 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
     }
 
     .chat-container {
       display: flex;
       flex-direction: column;
       height: 100vh;
-      width: 100vw;
-      background-color: #ece5dd;
+      background-color: #f5f5f7;
       transition: background 0.3s, color 0.3s;
     }
 
@@ -31,11 +30,16 @@
     }
 
     .chat-header {
-      background-color: #075e54;
+      background-color: #007aff;
       color: #fff;
       text-align: center;
       padding: 12px;
       font-weight: bold;
+      font-size: 1.1em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       position: sticky;
       top: 0;
       z-index: 2;
@@ -50,7 +54,7 @@
       text-align: center;
       font-size: 0.85em;
       padding: 6px;
-      background-color: #f0f0f0;
+      background-color: #e0e0e0;
       position: sticky;
       top: 48px;
       z-index: 2;
@@ -63,39 +67,91 @@
 
     .chat-box {
       flex: 1;
-      padding: 10px;
+      padding: 12px 10px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 16px;
+    }
+
+    .bubble-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .bubble-container.user1 {
+      justify-content: flex-end;
+    }
+
+    .bubble-container.user2 {
+      justify-content: flex-start;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .chat-container.dark .avatar {
+      background-color: #111;
     }
 
     .bubble {
-      max-width: 80%;
-      padding: 10px;
-      border-radius: 15px;
+      max-width: 70%;
+      padding: 10px 14px 18px 14px;
+      border-radius: 20px;
       word-wrap: break-word;
+      position: relative;
+      font-size: 0.95em;
+      line-height: 1.4;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
-    .user1 {
-      background-color: #dcf8c6;
-      align-self: flex-end;
+    .user1 .bubble {
+      background-color: #007aff;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+      border-top-right-radius: 4px;
+    }
+
+    .user2 .bubble {
+      background-color: #e5e5ea;
       color: #000;
+      border-bottom-left-radius: 4px;
+      border-top-left-radius: 4px;
     }
 
-    .user2 {
-      background-color: #f1f0f0;
-      align-self: flex-start;
-      color: #000;
-    }
-
-    .chat-container.dark .user1 {
+    .chat-container.dark .user1 .bubble {
       background-color: #0f0;
       color: #000;
     }
 
-    .chat-container.dark .user2 {
+    .chat-container.dark .user2 .bubble {
       background-color: #333;
+      color: #0f0;
+    }
+
+    .check {
+      position: absolute;
+      bottom: 4px;
+      right: 10px;
+      font-size: 0.7em;
+      opacity: 0.6;
+    }
+
+    .chat-container.dark .check {
+      color: #000;
+    }
+
+    .chat-container.dark .user2 .check {
       color: #0f0;
     }
 
@@ -113,14 +169,16 @@
 
     .chat-container.dark .chat-input {
       background-color: #111;
+      border-top: 1px solid #0f0;
     }
 
     input[type="text"] {
       flex: 1;
-      padding: 10px;
+      padding: 12px 16px;
       border-radius: 20px;
       border: 1px solid #ccc;
       font-size: 1em;
+      outline: none;
     }
 
     .chat-container.dark input[type="text"] {
@@ -130,12 +188,12 @@
     }
 
     .send-btn {
-      padding: 8px 14px;
+      padding: 8px 16px;
       border: none;
       border-radius: 20px;
-      background-color: #075e54;
+      background-color: #007aff;
       color: #fff;
-      font-size: 1em;
+      font-weight: bold;
       cursor: pointer;
     }
 
@@ -145,10 +203,10 @@
     }
 
     .toggle-btn {
-      font-size: 1.2em;
+      font-size: 1.4em;
       border: none;
       background: none;
-      color: #075e54;
+      color: #007aff;
       cursor: pointer;
     }
 
@@ -160,28 +218,31 @@
       position: absolute;
       top: 10px;
       right: 10px;
-      padding: 5px 10px;
-      font-size: 12px;
-      background-color: #333;
+      font-size: 18px;
+      background: none;
       color: #fff;
       border: none;
-      border-radius: 10px;
       cursor: pointer;
       z-index: 3;
     }
 
     .chat-container.dark .secret-btn {
-      background-color: #0f0;
-      color: #000;
+      color: #0f0;
+    }
+
+    @media (max-width: 600px) {
+      .bubble {
+        max-width: 85%;
+      }
     }
   </style>
 </head>
 <body>
 
   <div class="chat-container" id="chatContainer">
-    <button class="secret-btn" onclick="toggleSecret()">Modo secreto</button>
-    <div class="chat-header">Chat conmigo</div>
-    <div class="status" id="status">Escribiendo como: Persona 1</div>
+    <button class="secret-btn" onclick="toggleSecret()">🔒</button>
+    <div class="chat-header">💬 ChatMe</div>
+    <div class="status" id="status">Escribiendo como: Yo</div>
     <div class="chat-box" id="chatBox"></div>
     <div class="chat-input">
       <button id="toggleBtn" class="toggle-btn" onclick="toggleUser()">←</button>
@@ -198,20 +259,39 @@
       const text = input.value.trim();
       if (!text) return;
 
+      const container = document.createElement("div");
+      container.className = `bubble-container user${currentUser}`;
+
+      const avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.textContent = currentUser === 1 ? "😉" : "👽";
+
       const bubble = document.createElement("div");
-      bubble.className = `bubble user${currentUser}`;
+      bubble.className = "bubble";
       bubble.textContent = text;
 
+      if (currentUser === 1) {
+        const check = document.createElement("span");
+        check.className = "check";
+        check.textContent = "✓✓";
+        bubble.appendChild(check);
+      }
+
+      container.appendChild(currentUser === 1 ? bubble : avatar);
+      container.appendChild(currentUser === 1 ? avatar : bubble);
+
       const chatBox = document.getElementById("chatBox");
-      chatBox.appendChild(bubble);
+      chatBox.appendChild(container);
       chatBox.scrollTop = chatBox.scrollHeight;
       input.value = "";
     }
 
     function toggleUser() {
       currentUser = currentUser === 1 ? 2 : 1;
-      document.getElementById("status").textContent = `Escribiendo como: Persona ${currentUser}`;
-      document.getElementById("toggleBtn").textContent = currentUser === 1 ? "←" : "→";
+      const status = currentUser === 1 ? "Escribiendo como: Yo" : "Escribiendo como: 👽";
+      const arrow = currentUser === 1 ? "←" : "→";
+      document.getElementById("status").textContent = status;
+      document.getElementById("toggleBtn").textContent = arrow;
     }
 
     function toggleSecret() {

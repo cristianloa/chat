@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat conmigo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background-color: #ece5dd;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 480px;
+      height: 100vh;
+      background-color: #fff;
+      position: relative;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .chat-container.dark {
+      background-color: #000;
+      color: #0f0;
+    }
+
+    .chat-header {
+      background-color: #075e54;
+      color: #fff;
+      text-align: center;
+      padding: 10px;
+      font-weight: bold;
+    }
+
+    .chat-container.dark .chat-header {
+      background-color: #111;
+      color: #0f0;
+    }
+
+    .status {
+      text-align: center;
+      font-size: 0.85em;
+      padding: 5px;
+      background-color: #f0f0f0;
+    }
+
+    .chat-container.dark .status {
+      background-color: #111;
+      color: #0f0;
+    }
+
+    .chat-box {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 10px;
+      border-radius: 15px;
+      word-wrap: break-word;
+    }
+
+    .user1 {
+      background-color: #dcf8c6;
+      align-self: flex-end;
+      color: #000;
+    }
+
+    .user2 {
+      background-color: #f1f0f0;
+      align-self: flex-start;
+      color: #000;
+    }
+
+    .chat-container.dark .user1 {
+      background-color: #0f0;
+      color: #000;
+    }
+
+    .chat-container.dark .user2 {
+      background-color: #333;
+      color: #0f0;
+    }
+
+    .chat-input {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-top: 1px solid #ccc;
+      background-color: #fff;
+      gap: 8px;
+    }
+
+    .chat-container.dark .chat-input {
+      background-color: #111;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+
+    .chat-container.dark input[type="text"] {
+      background-color: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+    }
+
+    .send-btn {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 20px;
+      background-color: #075e54;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+    }
+
+    .chat-container.dark .send-btn {
+      background-color: #0f0;
+      color: #000;
+    }
+
+    .toggle-btn {
+      font-size: 1.2em;
+      border: none;
+      background: none;
+      color: #075e54;
+      cursor: pointer;
+    }
+
+    .chat-container.dark .toggle-btn {
+      color: #0f0;
+    }
+
+    .secret-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 10px;
+      font-size: 12px;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .chat-container.dark .secret-btn {
+      background-color: #0f0;
+      color: #000;
+    }
+
+    @media (max-width: 600px) {
+      .chat-container {
+        height: 100vh;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container" id="chatContainer">
+    <button class="secret-btn" onclick="toggleSecret()">Modo secreto</button>
+    <div class="chat-header">Chat conmigo</div>
+    <div class="status" id="status">Escribiendo como: Persona 1</div>
+    <div class="chat-box" id="chatBox"></div>
+    <div class="chat-input">
+      <button id="toggleBtn" class="toggle-btn" onclick="toggleUser()">←</button>
+      <input type="text" id="messageInput" placeholder="Escribe un mensaje...">
+      <button class="send-btn" onclick="sendMessage()">Enviar</button>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = 1;
+
+    function sendMessage() {
+      const input = document.getElementById("messageInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      const bubble = document.createElement("div");
+      bubble.className = `bubble user${currentUser}`;
+      bubble.textContent = text;
+
+      const chatBox = document.getElementById("chatBox");
+      chatBox.appendChild(bubble);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      input.value = "";
+    }
+
+    function toggleUser() {
+      currentUser = currentUser === 1 ? 2 : 1;
+      document.getElementById("status").textContent = `Escribiendo como: Persona ${currentUser}`;
+      document.getElementById("toggleBtn").textContent = currentUser === 1 ? "←" : "→";
+    }
+
+    function toggleSecret() {
+      document.getElementById("chatContainer").classList.toggle("dark");
+    }
+
+    // Enviar con Enter
+    document.getElementById("messageInput").addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+
+</body>
+</html>

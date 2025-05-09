@@ -157,6 +157,17 @@
       border-bottom: 8px solid transparent;
     }
 
+    /* Estilos para imágenes en burbujas */
+    .bubble img {
+      max-width: 200px;
+      max-height: 200px;
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
     /* Keyframes de animación */
     @keyframes slideInRight {
       from { opacity: 0; transform: translateX(30px); }
@@ -216,21 +227,18 @@
       border: 1px solid #00ff00;
     }
 
+    /* Estilo para el input de archivo (oculto) */
+    input[type="file"] {
+      display: none;
+    }
+
     /* Botones */
-    .send-btn {
+    .send-btn, .attach-btn, .toggle-btn {
       padding: 8px;
       background: none; border: none;
       cursor: pointer;
     }
-    .send-btn img {
-      width: 24px; height: 24px;
-    }
-    .toggle-btn {
-      padding: 8px;
-      background: none; border: none;
-      cursor: pointer;
-    }
-    .toggle-btn img {
+    .send-btn img, .attach-btn img, .toggle-btn img {
       width: 24px; height: 24px;
     }
     .secret-btn {
@@ -245,6 +253,7 @@
 
     @media (max-width: 600px) {
       .bubble { max-width: 85%; }
+      .bubble img { max-width: 150px; max-height: 150px; }
       .status-message { font-size: 0.8em; }
       .bubble.user1::after, .bubble.user2::after {
         bottom: 6px; /* Ajustar posición en pantallas pequeñas */
@@ -266,6 +275,10 @@
         <button id="toggleBtn" class="toggle-btn" aria-label="Alternar usuario" onclick="chatApp.toggleUser()">
           <img id="toggleIcon" src="https://img.icons8.com/ios/50/000000/switch.png" alt="Alternar usuario">
         </button>
+        <button id="attachBtn" class="attach-btn" aria-label="Adjuntar imagen">
+          <img id="attachIcon" src="https://img.icons8.com/ios/50/000000/attach.png" alt="Adjuntar">
+        </button>
+        <input type="file" id="imageInput" accept="image/*" aria-label="Seleccionar imagen">
         <input type="text" id="messageInput" aria-label="Entrada de mensaje" placeholder="Escribe un mensaje...">
         <button class="send-btn" aria-label="Enviar mensaje" onclick="chatApp.sendMessage()">
           <img id="sendIcon" src="https://img.icons8.com/ios/50/000000/sent.png" alt="Enviar">
@@ -282,9 +295,12 @@
         this.statusMessage = document.getElementById("statusMessage");
         this.chatBox = document.getElementById("chatBox");
         this.messageInput = document.getElementById("messageInput");
+        this.imageInput = document.getElementById("imageInput");
         this.toggleBtn = document.getElementById("toggleBtn");
         this.toggleIcon = document.getElementById("toggleIcon");
         this.sendIcon = document.getElementById("sendIcon");
+        this.attachBtn = document.getElementById("attachBtn");
+        this.attachIcon = document.getElementById("attachIcon");
         this.themeIcon = document.getElementById("themeIcon");
         this.maxMessages = 100;
         this.setupEventListeners();
@@ -294,6 +310,12 @@
       setupEventListeners() {
         this.messageInput.addEventListener("keydown", (e) => {
           if (e.key === "Enter") this.sendMessage();
+        });
+        this.attachBtn.addEventListener("click", () => {
+          this.imageInput.click();
+        });
+        this.imageInput.addEventListener("change", () => {
+          this.sendImage();
         });
       }
 
@@ -343,6 +365,65 @@
         this.messageInput.value = "";
       }
 
+      sendImage() {
+        const file = this.imageInput.files[0];
+        if (!file) return;
+
+        // Validar tipo y tamaño (máximo 5MB)
+        if (!file.type.startsWith('image/')) {
+          alert('Por favor, selecciona una imagen válida.');
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          alert('La imagen es demasiado grande. El tamaño máximo es 5MB.');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const cont = document.createElement("div");
+          cont.className = `bubble-container user${this.currentUser}`;
+
+          const avatar = document.createElement("div");
+          avatar.className = "avatar";
+          avatar.textContent = this.currentUser === 1 ? "😉" : "👽";
+
+          const bubble = document.createElement("div");
+          bubble.className = `bubble user${this.currentUser}`;
+
+          const img = document.createElement("img");
+          img.src = reader.result;
+          img.alt = "Imagen adjunta";
+
+          const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          bubble.appendChild(img);
+          bubble.innerHTML += `<span class="timestamp">${time}</span>`;
+
+          if (this.currentUser === 1) {
+            const ck = document.createElement("span");
+            ck.className = "check";
+            ck.textContent = "✓✓";
+            bubble.appendChild(ck);
+          }
+
+          if (this.currentUser === 1) {
+            cont.appendChild(bubble);
+            cont.appendChild(avatar);
+          } else {
+            cont.appendChild(avatar);
+            cont.appendChild(bubble);
+          }
+
+          this.chatBox.appendChild(cont);
+          if (this.chatBox.children.length > this.maxMessages) {
+            this.chatBox.removeChild(this.chatBox.firstChild);
+          }
+          this.chatBox.scrollTop = this.chatBox.scrollHeight;
+          this.imageInput.value = "";
+        };
+        reader.readAsDataURL(file);
+      }
+
       toggleUser() {
         this.currentUser = this.currentUser === 1 ? 2 : 1;
         this.statusMessage.textContent = this.currentUser === 1
@@ -352,6 +433,9 @@
         this.toggleIcon.src = isDark
           ? "https://img.icons8.com/ios/50/ffffff/switch.png"
           : "https://img.icons8.com/ios/50/000000/switch.png";
+        this.attachIcon.src = isDark
+          ? "https://img.icons8.com/ios/50/ffffff/attach.png"
+          : "https://img.icons8.com/ios/50/000000/attach.png";
       }
 
       toggleSecret() {
@@ -363,16 +447,28 @@
         this.toggleIcon.src = isDark
           ? "https://img.icons8.com/ios/50/ffffff/switch.png"
           : "https://img.icons8.com/ios/50/000000/switch.png";
+        this.attachIcon.src = isDark
+          ? "https://img.icons8.com/ios/50/ffffff/attach.png"
+          : "https://img.icons8.com/ios/50/000000/attach.png";
         this.themeIcon.src = isDark
           ? "https://img.icons8.com/ios/50/ffffff/moon-symbol.png"
           : "https://img.icons8.com/ios/50/000000/sun.png";
       }
 
       setRandomBackground() {
-        const w = window.innerWidth, h = window.innerHeight;
-        const rand = Math.floor(Math.random() * 1000);
+        const natureImages = [
+          'https://images.unsplash.com/photo-1448375240586-882707db888b', // Bosque
+          'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b', // Montaña
+          'https://images.unsplash.com/photo-1506744038136-46273834b3fb', // Río
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e', // Océano
+          'https://images.unsplash.com/photo-1537420327992-d6e192287183', // Estrellas
+          'https://images.unsplash.com/photo-1501696461415-6bd6660c6742', // Pradera
+          'https://images.unsplash.com/photo-1433086966358-54859d0ed716', // Cascada
+          'https://images.unsplash.com/photo-1470770903677-9f44675091c6'  // Lago
+        ];
+        const randImage = natureImages[Math.floor(Math.random() * natureImages.length)];
         const img = new Image();
-        img.src = `https://picsum.photos/${w}/${h}?random=${rand}`;
+        img.src = randImage;
         img.onload = () => {
           this.chatContainer.style.backgroundImage = `url('${img.src}')`;
         };

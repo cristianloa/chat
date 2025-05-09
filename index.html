@@ -168,6 +168,21 @@
       margin-bottom: 8px;
     }
 
+    /* Estilos para audio en burbujas */
+    .bubble audio {
+      max-width: 200px;
+      width: 100%;
+      border-radius: 10px;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .bubble audio::-webkit-media-controls-panel {
+      background-color: rgba(255,255,255,0.8);
+    }
+    .chat-container.dark .bubble audio::-webkit-media-controls-panel {
+      background-color: rgba(17,17,17,0.9);
+    }
+
     /* Keyframes de animación */
     @keyframes slideInRight {
       from { opacity: 0; transform: translateX(30px); }
@@ -233,13 +248,16 @@
     }
 
     /* Botones */
-    .send-btn, .attach-btn, .toggle-btn {
+    .send-btn, .attach-btn, .record-btn, .toggle-btn {
       padding: 8px;
       background: none; border: none;
       cursor: pointer;
     }
-    .send-btn img, .attach-btn img, .toggle-btn img {
+    .send-btn img, .attach-btn img, .record-btn img, .toggle-btn img {
       width: 24px; height: 24px;
+    }
+    .record-btn.recording img {
+      filter: brightness(0.5);
     }
     .secret-btn {
       position: absolute; top: 10px; right: 10px;
@@ -253,7 +271,7 @@
 
     @media (max-width: 600px) {
       .bubble { max-width: 85%; }
-      .bubble img { max-width: 150px; max-height: 150px; }
+      .bubble img, .bubble audio { max-width: 150px; }
       .status-message { font-size: 0.8em; }
       .bubble.user1::after, .bubble.user2::after {
         bottom: 6px; /* Ajustar posición en pantallas pequeñas */
@@ -274,6 +292,9 @@
       <div class="input-row">
         <button id="toggleBtn" class="toggle-btn" aria-label="Alternar usuario" onclick="chatApp.toggleUser()">
           <img id="toggleIcon" src="https://img.icons8.com/ios/50/000000/switch.png" alt="Alternar usuario">
+        </button>
+        <button id="recordBtn" class="record-btn" aria-label="Grabar mensaje de voz">
+          <img id="recordIcon" src="https://img.icons8.com/ios/50/000000/microphone.png" alt="Grabar">
         </button>
         <button id="attachBtn" class="attach-btn" aria-label="Adjuntar imagen">
           <img id="attachIcon" src="https://img.icons8.com/ios/50/000000/attach.png" alt="Adjuntar">
@@ -296,13 +317,18 @@
         this.chatBox = document.getElementById("chatBox");
         this.messageInput = document.getElementById("messageInput");
         this.imageInput = document.getElementById("imageInput");
+        this.recordBtn = document.getElementById("recordBtn");
+        this.recordIcon = document.getElementById("recordIcon");
+        this.attachBtn = document.getElementById("attachBtn");
+        this.attachIcon = document.getElementById("attachIcon");
         this.toggleBtn = document.getElementById("toggleBtn");
         this.toggleIcon = document.getElementById("toggleIcon");
         this.sendIcon = document.getElementById("sendIcon");
-        this.attachBtn = document.getElementById("attachBtn");
-        this.attachIcon = document.getElementById("attachIcon");
         this.themeIcon = document.getElementById("themeIcon");
         this.maxMessages = 100;
+        this.recorder = null;
+        this.isRecording = false;
+        this.maxRecordTime = 60; // Máximo 60 segundos
         this.setupEventListeners();
         this.setRandomBackground();
       }
@@ -317,6 +343,65 @@
         this.imageInput.addEventListener("change", () => {
           this.sendImage();
         });
+        this.recordBtn.addEventListener("click", () => {
+          this.toggleRecording();
+        });
+      }
+
+      async startRecording() {
+        if (!navigator.mediaDevices || !window.MediaRecorder) {
+          alert('Tu navegador no soporta la grabación de audio.');
+          return;
+        }
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          this.recorder = new MediaRecorder(stream);
+          const chunks = [];
+
+          this.recorder.ondataavailable = (e) => {
+            chunks.push(e.data);
+          };
+
+          this.recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'audio/webm' });
+            this.sendAudio(blob);
+            stream.getTracks().forEach(track => track.stop());
+          };
+
+          this.recorder.start();
+          this.isRecording = true;
+          this.recordBtn.classList.add('recording');
+          this.recordIcon.src = this.chatContainer.classList.contains('dark')
+            ? 'https://img.icons8.com/ios/50/ffffff/stop.png'
+            : 'https://img.icons8.com/ios/50/000000/stop.png';
+
+          // Detener automáticamente después de maxRecordTime
+          setTimeout(() => {
+            if (this.isRecording) this.stopRecording();
+          }, this.maxRecordTime * 1000);
+        } catch (err) {
+          alert('No se pudo acceder al micrófono. Por favor, otorga permisos.');
+        }
+      }
+
+      stopRecording() {
+        if (this.recorder && this.isRecording) {
+          this.recorder.stop();
+          this.isRecording = false;
+          this.recordBtn.classList.remove('recording');
+          this.recordIcon.src = this.chatContainer.classList.contains('dark')
+            ? 'https://img.icons8.com/ios/50/ffffff/microphone.png'
+            : 'https://img.icons8.com/ios/50/000000/microphone.png';
+        }
+      }
+
+      toggleRecording() {
+        if (this.isRecording) {
+          this.stopRecording();
+        } else {
+          this.startRecording();
+        }
       }
 
       sanitizeInput(text) {
@@ -424,6 +509,49 @@
         reader.readAsDataURL(file);
       }
 
+      sendAudio(blob) {
+        const audioUrl = URL.createObjectURL(blob);
+        const cont = document.createElement("div");
+        cont.className = `bubble-container user${this.currentUser}`;
+
+        const avatar = document.createElement("div");
+        avatar.className = "avatar";
+        avatar.textContent = this.currentUser === 1 ? "😉" : "👽";
+
+        const bubble = document.createElement("div");
+        bubble.className = `bubble user${this.currentUser}`;
+
+        const audio = document.createElement("audio");
+        audio.src = audioUrl;
+        audio.controls = true;
+        audio.alt = "Mensaje de voz";
+
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        bubble.appendChild(audio);
+        bubble.innerHTML += `<span class="timestamp">${time}</span>`;
+
+        if (this.currentUser === 1) {
+          const ck = document.createElement("span");
+          ck.className = "check";
+          ck.textContent = "✓✓";
+          bubble.appendChild(ck);
+        }
+
+        if (this.currentUser === 1) {
+          cont.appendChild(bubble);
+          cont.appendChild(avatar);
+        } else {
+          cont.appendChild(avatar);
+          cont.appendChild(bubble);
+        }
+
+        this.chatBox.appendChild(cont);
+        if (this.chatBox.children.length > this.maxMessages) {
+          this.chatBox.removeChild(this.chatBox.firstChild);
+        }
+        this.chatBox.scrollTop = this.chatBox.scrollHeight;
+      }
+
       toggleUser() {
         this.currentUser = this.currentUser === 1 ? 2 : 1;
         this.statusMessage.textContent = this.currentUser === 1
@@ -436,6 +564,9 @@
         this.attachIcon.src = isDark
           ? "https://img.icons8.com/ios/50/ffffff/attach.png"
           : "https://img.icons8.com/ios/50/000000/attach.png";
+        this.recordIcon.src = isDark
+          ? "https://img.icons8.com/ios/50/ffffff/microphone.png"
+          : "https://img.icons8.com/ios/50/000000/microphone.png";
       }
 
       toggleSecret() {
@@ -450,6 +581,9 @@
         this.attachIcon.src = isDark
           ? "https://img.icons8.com/ios/50/ffffff/attach.png"
           : "https://img.icons8.com/ios/50/000000/attach.png";
+        this.recordIcon.src = isDark
+          ? "https://img.icons8.com/ios/50/ffffff/microphone.png"
+          : "https://img.icons8.com/ios/50/000000/microphone.png";
         this.themeIcon.src = isDark
           ? "https://img.icons8.com/ios/50/ffffff/moon-symbol.png"
           : "https://img.icons8.com/ios/50/000000/sun.png";

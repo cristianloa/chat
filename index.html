@@ -22,15 +22,16 @@
       flex-direction: column;
       height: 100vh;
       background-color: #f5f5f7;
-      transition: background 0.3s, color 0.3s;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
+      transition: background 0.3s, color 0.3s;
     }
 
     .chat-container.dark {
       background-color: #000;
       color: #0f0;
+      background: rgba(0, 0, 0, 0.7);
     }
 
     .chat-header {
@@ -54,9 +55,9 @@
       color: #0f0;
     }
 
-    .status {
+    .status-message {
       text-align: center;
-      font-size: 0.85em;
+      font-size: 0.9em;
       padding: 6px;
       background-color: #e0e0e0;
       position: sticky;
@@ -64,7 +65,7 @@
       z-index: 2;
     }
 
-    .chat-container.dark .status {
+    .chat-container.dark .status-message {
       background-color: #111;
       color: #0f0;
     }
@@ -192,18 +193,19 @@
     }
 
     .send-btn {
-      padding: 8px 16px;
+      padding: 8px;
       border: none;
-      border-radius: 20px;
-      background-color: #007aff;
-      color: #fff;
-      font-weight: bold;
+      background: none;
       cursor: pointer;
     }
 
-    .chat-container.dark .send-btn {
-      background-color: #0f0;
-      color: #000;
+    .send-btn img {
+      width: 24px;
+      height: 24px;
+    }
+
+    .chat-container.dark .send-btn img {
+      filter: invert(1);
     }
 
     .toggle-btn {
@@ -234,12 +236,6 @@
       color: #0f0;
     }
 
-    .status-message {
-      text-align: center;
-      font-size: 0.9em;
-      margin-bottom: 10px;
-    }
-
     @media (max-width: 600px) {
       .bubble {
         max-width: 85%;
@@ -257,24 +253,22 @@
     <div class="chat-input">
       <button id="toggleBtn" class="toggle-btn" onclick="toggleUser()">←</button>
       <input type="text" id="messageInput" placeholder="Escribe un mensaje...">
-      <button class="send-btn" onclick="sendMessage()">Enviar</button>
+      <button class="send-btn" onclick="sendMessage()">
+        <img src="https://img.icons8.com/ios/50/000000/sent.png" alt="Send">
+      </button>
     </div>
   </div>
 
   <script>
     let currentUser = 1;
 
-    const backgrounds = [
-      'https://source.unsplash.com/random/800x600',
-      'https://source.unsplash.com/random/801x601',
-      'https://source.unsplash.com/random/802x602',
-      'https://source.unsplash.com/random/803x603',
-      'https://source.unsplash.com/random/804x604'
-    ];
-
     function setRandomBackground() {
-      const randomIndex = Math.floor(Math.random() * backgrounds.length);
-      document.getElementById("chatContainer").style.backgroundImage = `url(${backgrounds[randomIndex]})`;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const random = Math.floor(Math.random() * 1000); // para que no se repita por cache
+      const url = `https://picsum.photos/${width}/${height}?random=${random}`;
+      const container = document.getElementById("chatContainer");
+      container.style.backgroundImage = `url('${url}')`;
     }
 
     function sendMessage() {
@@ -323,13 +317,8 @@
 
     document.getElementById("messageInput").addEventListener("keydown", function(event) {
       if (event.key === "Enter") {
-        event.preventDefault();
-        sendMessage();
-      }
-    });
-
-    window.onload = setRandomBackground;  // Set random background when the page loads
-  </script>
-
-</body>
-</html>
+sendMessage();
+}
+});
+    setRandomBackground();
+</script> </body> </html>

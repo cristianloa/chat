@@ -21,9 +21,26 @@
       background-position: center;
       background-repeat: no-repeat;
       transition: background 0.3s, color 0.3s;
+      position: relative;
     }
     .chat-container.dark {
-      color: #0f0;
+      color: #00ff00;
+    }
+
+    /* Capa para el filtro de fondo en modo oscuro */
+    .chat-container.dark::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: inherit;
+      filter: brightness(0.5);
+      z-index: 1;
+    }
+
+    /* Asegurar que el contenido esté sobre la capa de filtro */
+    .chat-container > * {
+      position: relative;
+      z-index: 2;
     }
 
     /* Cabecera semitransparente */
@@ -38,8 +55,8 @@
       display: flex; align-items: center; justify-content: center; gap: 8px;
     }
     .chat-container.dark .chat-header {
-      background: rgba(17,17,17,0.8);
-      color: #0f0;
+      background: rgba(17,17,17,0.9);
+      color: #00ff00;
     }
 
     /* Estado semitransparente */
@@ -51,8 +68,8 @@
       position: sticky; top: 48px; z-index: 2;
     }
     .chat-container.dark .status-message {
-      background: rgba(17,17,17,0.8);
-      color: #0f0;
+      background: rgba(17,17,17,0.9);
+      color: #00ff00;
     }
 
     .chat-box {
@@ -78,7 +95,7 @@
       font-size: 18px; flex-shrink: 0;
     }
     .chat-container.dark .avatar {
-      background-color: rgba(17,17,17,0.8);
+      background-color: rgba(17,17,17,0.9);
     }
 
     /* Burbujas animadas */
@@ -101,12 +118,12 @@
       animation: slideInLeft 0.3s ease-out;
     }
     .chat-container.dark .bubble.user1 {
-      background-color: rgba(0,255,0,0.8);
+      background-color: rgba(0,255,0,0.9);
       color: #000;
     }
     .chat-container.dark .bubble.user2 {
-      background-color: rgba(51,51,51,0.8);
-      color: #0f0;
+      background-color: rgba(51,51,51,0.9);
+      color: #00ff00;
     }
 
     /* Keyframes de animación */
@@ -130,6 +147,13 @@
       color: #000;
     }
 
+    /* Marca de tiempo */
+    .timestamp {
+      font-size: 0.7em;
+      opacity: 0.6;
+      margin-left: 8px;
+    }
+
     .chat-input {
       display: flex; align-items: center;
       padding: 10px;
@@ -139,8 +163,8 @@
       position: sticky; bottom: 0; z-index: 2;
     }
     .chat-container.dark .chat-input {
-      background: rgba(17,17,17,0.8);
-      border-top: 1px solid #0f0;
+      background: rgba(17,17,17,0.9);
+      border-top: 1px solid #00ff00;
     }
 
     input[type="text"] {
@@ -153,8 +177,8 @@
     }
     .chat-container.dark input[type="text"] {
       background-color: #000;
-      color: #0f0;
-      border: 1px solid #0f0;
+      color: #00ff00;
+      border: 1px solid #00ff00;
     }
 
     /* Botones */
@@ -166,15 +190,12 @@
     .send-btn img {
       width: 24px; height: 24px;
     }
-    .chat-container.dark .send-btn img {
-      filter: invert(1);
-    }
     .toggle-btn {
       font-size: 1.4em; background: none; border: none;
       color: #007aff; cursor: pointer;
     }
     .chat-container.dark .toggle-btn {
-      color: #0f0;
+      color: #00ff00;
     }
     .secret-btn {
       position: absolute; top: 10px; right: 10px;
@@ -182,7 +203,7 @@
       color: #fff; cursor: pointer; z-index: 3;
     }
     .chat-container.dark .secret-btn {
-      color: #0f0;
+      color: #00ff00;
     }
 
     @media (max-width: 600px) {
@@ -193,87 +214,116 @@
 <body>
 
   <div class="chat-container" id="chatContainer">
-    <button class="secret-btn" onclick="toggleSecret()">🔒</button>
+    <button class="secret-btn" aria-label="Alternar modo oscuro" onclick="chatApp.toggleSecret()">🔒</button>
     <div class="chat-header">💬 ChatMe</div>
     <div class="status-message" id="statusMessage">Escribiendo como: Yo</div>
     <div class="chat-box" id="chatBox"></div>
     <div class="chat-input">
-      <button id="toggleBtn" class="toggle-btn" onclick="toggleUser()">←</button>
-      <input type="text" id="messageInput" placeholder="Escribe un mensaje...">
-      <button class="send-btn" onclick="sendMessage()">
-        <img src="https://img.icons8.com/ios/50/000000/sent.png" alt="Enviar">
+      <button id="toggleBtn" class="toggle-btn" aria-label="Cambiar usuario" onclick="chatApp.toggleUser()">←</button>
+      <input type="text" id="messageInput" aria-label="Entrada de mensaje" placeholder="Escribe un mensaje...">
+      <button class="send-btn" aria-label="Enviar mensaje" onclick="chatApp.sendMessage()">
+        <img id="sendIcon" src="https://img.icons8.com/ios/50/000000/sent.png" alt="Enviar">
       </button>
     </div>
   </div>
 
   <script>
-    let currentUser = 1;
-    // Fondo aleatorio
-    function setRandomBackground() {
-      const w = window.innerWidth, h = window.innerHeight;
-      const rand = Math.floor(Math.random()*1000);
-      document.getElementById("chatContainer")
-        .style.backgroundImage = `url('https://picsum.photos/${w}/${h}?random=${rand}')`;
-    }
-
-    function sendMessage() {
-      const inp = document.getElementById("messageInput");
-      const text = inp.value.trim();
-      if (!text) return;
-
-      const cont = document.createElement("div");
-      cont.className = `bubble-container user${currentUser}`;
-
-      const avatar = document.createElement("div");
-      avatar.className = "avatar";
-      avatar.textContent = currentUser===1 ? "😉" : "👽";
-
-      const bubble = document.createElement("div");
-      bubble.className = `bubble user${currentUser}`;
-      bubble.textContent = text;
-
-      if (currentUser===1) {
-        const ck = document.createElement("span");
-        ck.className = "check"; ck.textContent="✓✓";
-        bubble.appendChild(ck);
+    class ChatApp {
+      constructor() {
+        this.currentUser = 1;
+        this.chatContainer = document.getElementById("chatContainer");
+        this.statusMessage = document.getElementById("statusMessage");
+        this.chatBox = document.getElementById("chatBox");
+        this.messageInput = document.getElementById("messageInput");
+        this.toggleBtn = document.getElementById("toggleBtn");
+        this.sendIcon = document.getElementById("sendIcon");
+        this.maxMessages = 100;
+        this.setupEventListeners();
+        this.setRandomBackground();
       }
 
-      // orden avatar/bubble según usuario
-      if (currentUser===1) {
-        cont.appendChild(bubble);
-        cont.appendChild(avatar);
-      } else {
-        cont.appendChild(avatar);
-        cont.appendChild(bubble);
+      setupEventListeners() {
+        this.messageInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") this.sendMessage();
+        });
       }
 
-      const box = document.getElementById("chatBox");
-      box.appendChild(cont);
-      box.scrollTop = box.scrollHeight;
-      inp.value = "";
-    }
+      sanitizeInput(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
 
-    function toggleUser() {
-      currentUser = currentUser===1?2:1;
-      document.getElementById("statusMessage")
-        .textContent = currentUser===1
+      sendMessage() {
+        const text = this.sanitizeInput(this.messageInput.value.trim());
+        if (!text || text.length > 1000) return;
+
+        const cont = document.createElement("div");
+        cont.className = `bubble-container user${this.currentUser}`;
+
+        const avatar = document.createElement("div");
+        avatar.className = "avatar";
+        avatar.textContent = this.currentUser === 1 ? "😉" : "👽";
+
+        const bubble = document.createElement("div");
+        bubble.className = `bubble user${this.currentUser}`;
+
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        bubble.innerHTML = `<span>${text}</span><span class="timestamp">${time}</span>`;
+
+        if (this.currentUser === 1) {
+          const ck = document.createElement("span");
+          ck.className = "check";
+          ck.textContent = "✓✓";
+          bubble.appendChild(ck);
+        }
+
+        if (this.currentUser === 1) {
+          cont.appendChild(bubble);
+          cont.appendChild(avatar);
+        } else {
+          cont.appendChild(avatar);
+          cont.appendChild(bubble);
+        }
+
+        this.chatBox.appendChild(cont);
+        if (this.chatBox.children.length > this.maxMessages) {
+          this.chatBox.removeChild(this.chatBox.firstChild);
+        }
+        this.chatBox.scrollTop = this.chatBox.scrollHeight;
+        this.messageInput.value = "";
+      }
+
+      toggleUser() {
+        this.currentUser = this.currentUser === 1 ? 2 : 1;
+        this.statusMessage.textContent = this.currentUser === 1
           ? "Escribiendo como: Yo"
           : "Escribiendo como: 👽";
-      document.getElementById("toggleBtn")
-        .textContent = currentUser===1 ? "←":"→";
+        this.toggleBtn.textContent = this.currentUser === 1 ? "←" : "→";
+      }
+
+      toggleSecret() {
+        this.chatContainer.classList.toggle("dark");
+        this.sendIcon.src = this.chatContainer.classList.contains("dark")
+          ? "https://img.icons8.com/ios/50/ffffff/sent.png"
+          : "https://img.icons8.com/ios/50/000000/sent.png";
+      }
+
+      setRandomBackground() {
+        const w = window.innerWidth, h = window.innerHeight;
+        const rand = Math.floor(Math.random() * 1000);
+        const img = new Image();
+        img.src = `https://picsum.photos/${w}/${h}?random=${rand}`;
+        img.onload = () => {
+          this.chatContainer.style.backgroundImage = `url('${img.src}')`;
+        };
+        img.onerror = () => {
+          this.chatContainer.style.backgroundColor = "#f0f0f0";
+        };
+      }
     }
 
-    function toggleSecret() {
-      document.getElementById("chatContainer")
-        .classList.toggle("dark");
-    }
-
-    document.getElementById("messageInput")
-      .addEventListener("keydown", e => {
-        if (e.key==="Enter") sendMessage();
-      });
-
-    setRandomBackground();
+    const chatApp = new ChatApp();
   </script>
 
 </body>

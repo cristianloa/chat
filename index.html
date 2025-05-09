@@ -59,13 +59,14 @@
       color: #00ff00;
     }
 
-    /* Estado semitransparente */
+    /* Estado semitransparente, ahora en chat-input */
     .status-message {
-      background: rgba(224,224,224,0.8);
-      padding: 6px;
+      background: rgba(255,255,255,0.8);
+      padding: 6px 12px;
       text-align: center;
-      font-size: 0.9em;
-      position: sticky; top: 48px; z-index: 2;
+      font-size: 0.85em;
+      border-radius: 10px;
+      width: 100%;
     }
     .chat-container.dark .status-message {
       background: rgba(17,17,17,0.9);
@@ -98,32 +99,62 @@
       background-color: rgba(17,17,17,0.9);
     }
 
-    /* Burbujas animadas */
+    /* Burbujas animadas con sombra mejorada y colas */
     .bubble {
       max-width: 70%;
       padding: 10px 14px 18px;
       border-radius: 20px;
       position: relative;
       font-size: 0.95em; line-height: 1.4;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
     .bubble.user1 {
       background-color: #007aff;
       color: #fff;
       animation: slideInRight 0.3s ease-out;
+      border-bottom-right-radius: 4px; /* Reducir radio para la cola */
+    }
+    .bubble.user1::after {
+      content: '';
+      position: absolute;
+      bottom: 8px; right: -8px;
+      width: 0; height: 0;
+      border-left: 8px solid #007aff;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
     }
     .bubble.user2 {
       background-color: #e5e5ea;
       color: #000;
       animation: slideInLeft 0.3s ease-out;
+      border-bottom-left-radius: 4px; /* Reducir radio para la cola */
+    }
+    .bubble.user2::after {
+      content: '';
+      position: absolute;
+      bottom: 8px; left: -8px;
+      width: 0; height: 0;
+      border-right: 8px solid #e5e5ea;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
     }
     .chat-container.dark .bubble.user1 {
       background-color: rgba(0,255,0,0.9);
       color: #000;
     }
+    .chat-container.dark .bubble.user1::after {
+      border-left: 8px solid rgba(0,255,0,0.9);
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+    }
     .chat-container.dark .bubble.user2 {
       background-color: rgba(51,51,51,0.9);
       color: #00ff00;
+    }
+    .chat-container.dark .bubble.user2::after {
+      border-right: 8px solid rgba(51,51,51,0.9);
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
     }
 
     /* Keyframes de animación */
@@ -155,7 +186,7 @@
     }
 
     .chat-input {
-      display: flex; align-items: center;
+      display: flex; flex-direction: column; align-items: stretch;
       padding: 10px;
       background: rgba(255,255,255,0.8);
       border-top: 1px solid #ccc;
@@ -165,6 +196,10 @@
     .chat-container.dark .chat-input {
       background: rgba(17,17,17,0.9);
       border-top: 1px solid #00ff00;
+    }
+
+    .input-row {
+      display: flex; align-items: center; gap: 8px;
     }
 
     input[type="text"] {
@@ -191,39 +226,51 @@
       width: 24px; height: 24px;
     }
     .toggle-btn {
-      font-size: 1.4em; background: none; border: none;
-      color: #007aff; cursor: pointer;
+      padding: 8px;
+      background: none; border: none;
+      cursor: pointer;
     }
-    .chat-container.dark .toggle-btn {
-      color: #00ff00;
+    .toggle-btn img {
+      width: 24px; height: 24px;
     }
     .secret-btn {
       position: absolute; top: 10px; right: 10px;
-      font-size: 18px; background: none; border: none;
-      color: #fff; cursor: pointer; z-index: 3;
+      padding: 8px;
+      background: none; border: none;
+      cursor: pointer; z-index: 3;
     }
-    .chat-container.dark .secret-btn {
-      color: #00ff00;
+    .secret-btn img {
+      width: 24px; height: 24px;
     }
 
     @media (max-width: 600px) {
       .bubble { max-width: 85%; }
+      .status-message { font-size: 0.8em; }
+      .bubble.user1::after, .bubble.user2::after {
+        bottom: 6px; /* Ajustar posición en pantallas pequeñas */
+      }
     }
   </style>
 </head>
 <body>
 
   <div class="chat-container" id="chatContainer">
-    <button class="secret-btn" aria-label="Alternar modo oscuro" onclick="chatApp.toggleSecret()">🔒</button>
+    <button class="secret-btn" aria-label="Alternar modo oscuro" onclick="chatApp.toggleSecret()">
+      <img id="themeIcon" src="https://img.icons8.com/ios/50/000000/sun.png" alt="Alternar modo oscuro">
+    </button>
     <div class="chat-header">💬 ChatMe</div>
-    <div class="status-message" id="statusMessage">Escribiendo como: Yo</div>
     <div class="chat-box" id="chatBox"></div>
     <div class="chat-input">
-      <button id="toggleBtn" class="toggle-btn" aria-label="Cambiar usuario" onclick="chatApp.toggleUser()">←</button>
-      <input type="text" id="messageInput" aria-label="Entrada de mensaje" placeholder="Escribe un mensaje...">
-      <button class="send-btn" aria-label="Enviar mensaje" onclick="chatApp.sendMessage()">
-        <img id="sendIcon" src="https://img.icons8.com/ios/50/000000/sent.png" alt="Enviar">
-      </button>
+      <div class="status-message" id="statusMessage">Escribiendo como: Yo</div>
+      <div class="input-row">
+        <button id="toggleBtn" class="toggle-btn" aria-label="Alternar usuario" onclick="chatApp.toggleUser()">
+          <img id="toggleIcon" src="https://img.icons8.com/ios/50/000000/switch.png" alt="Alternar usuario">
+        </button>
+        <input type="text" id="messageInput" aria-label="Entrada de mensaje" placeholder="Escribe un mensaje...">
+        <button class="send-btn" aria-label="Enviar mensaje" onclick="chatApp.sendMessage()">
+          <img id="sendIcon" src="https://img.icons8.com/ios/50/000000/sent.png" alt="Enviar">
+        </button>
+      </div>
     </div>
   </div>
 
@@ -236,7 +283,9 @@
         this.chatBox = document.getElementById("chatBox");
         this.messageInput = document.getElementById("messageInput");
         this.toggleBtn = document.getElementById("toggleBtn");
+        this.toggleIcon = document.getElementById("toggleIcon");
         this.sendIcon = document.getElementById("sendIcon");
+        this.themeIcon = document.getElementById("themeIcon");
         this.maxMessages = 100;
         this.setupEventListeners();
         this.setRandomBackground();
@@ -299,14 +348,24 @@
         this.statusMessage.textContent = this.currentUser === 1
           ? "Escribiendo como: Yo"
           : "Escribiendo como: 👽";
-        this.toggleBtn.textContent = this.currentUser === 1 ? "←" : "→";
+        const isDark = this.chatContainer.classList.contains("dark");
+        this.toggleIcon.src = isDark
+          ? "https://img.icons8.com/ios/50/ffffff/switch.png"
+          : "https://img.icons8.com/ios/50/000000/switch.png";
       }
 
       toggleSecret() {
         this.chatContainer.classList.toggle("dark");
-        this.sendIcon.src = this.chatContainer.classList.contains("dark")
+        const isDark = this.chatContainer.classList.contains("dark");
+        this.sendIcon.src = isDark
           ? "https://img.icons8.com/ios/50/ffffff/sent.png"
           : "https://img.icons8.com/ios/50/000000/sent.png";
+        this.toggleIcon.src = isDark
+          ? "https://img.icons8.com/ios/50/ffffff/switch.png"
+          : "https://img.icons8.com/ios/50/000000/switch.png";
+        this.themeIcon.src = isDark
+          ? "https://img.icons8.com/ios/50/ffffff/moon-symbol.png"
+          : "https://img.icons8.com/ios/50/000000/sun.png";
       }
 
       setRandomBackground() {

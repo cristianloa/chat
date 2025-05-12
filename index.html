@@ -14,14 +14,86 @@
       font-family: Arial, sans-serif;
     }
 
+    /* Estilos para el formulario modal */
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: rgba(255,255,255,0.9);
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .modal-content.dark {
+      background: rgba(17,17,17,0.9);
+      color: #00ff00;
+    }
+    .modal-content h2 {
+      margin: 0 0 16px;
+      font-size: 1.2em;
+    }
+    .modal-content input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+    .modal-content.dark input[type="text"] {
+      background: #000;
+      color: #00ff00;
+      border: 1px solid #00ff00;
+    }
+    .modal-content select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+    .modal-content.dark select {
+      background: #000;
+      color: #00ff00;
+      border: 1px solid #00ff00;
+    }
+    .modal-content button {
+      padding: 10px 20px;
+      background: #007aff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    .modal-content.dark button {
+      background: rgba(0,255,0,0.9);
+      color: #000;
+    }
+    .modal-content button:hover {
+      opacity: 0.9;
+    }
+
     .chat-container {
-      display: flex; flex-direction: column;
+      display: none; /* Oculto inicialmente */
+      flex-direction: column;
       height: 100vh;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
       transition: background 0.3s, color 0.3s;
       position: relative;
+    }
+    .chat-container.active {
+      display: flex; /* Mostrar cuando se activa */
     }
     .chat-container.dark {
       color: #00ff00;
@@ -293,11 +365,44 @@
         padding: 10px 12px; /* Reducir padding del input */
         font-size: 0.9em; /* Reducir tamaño de fuente */
       }
+      .modal-content {
+        padding: 16px;
+        max-width: 300px;
+      }
+      .modal-content h2 {
+        font-size: 1em;
+      }
+      .modal-content input[type="text"], .modal-content select {
+        padding: 8px;
+        font-size: 0.9em;
+      }
+      .modal-content button {
+        padding: 8px 16px;
+        font-size: 0.9em;
+      }
     }
   </style>
 </head>
 <body>
 
+  <!-- Formulario Modal -->
+  <div class="modal" id="userModal">
+    <div class="modal-content" id="modalContent">
+      <h2>¡Bienvenido a ChatMe!</h2>
+      <input type="text" id="userNameInput" placeholder="Ingresa tu nombre" aria-label="Nombre del usuario">
+      <select id="userEmojiInput" aria-label="Seleccionar emoji">
+        <option value="😊">😊</option>
+        <option value="😎">😎</option>
+        <option value="🐱">🐱</option>
+        <option value="🌟">🌟</option>
+        <option value="🚀">🚀</option>
+        <option value="🎉">🎉</option>
+      </select>
+      <button onclick="chatApp.startChat()">Iniciar Chat</button>
+    </div>
+  </div>
+
+  <!-- Contenedor del Chat -->
   <div class="chat-container" id="chatContainer">
     <button class="secret-btn" aria-label="Alternar modo oscuro" onclick="chatApp.toggleSecret()">
       <img id="themeIcon" src="https://img.icons8.com/ios/50/000000/sun.png" alt="Alternar modo oscuro">
@@ -329,7 +434,14 @@
     class ChatApp {
       constructor() {
         this.currentUser = 1;
+        this.user1Name = "Yo";
+        this.user1Emoji = "😉";
+        this.user2Emoji = "👽";
         this.chatContainer = document.getElementById("chatContainer");
+        this.userModal = document.getElementById("userModal");
+        this.modalContent = document.getElementById("modalContent");
+        this.userNameInput = document.getElementById("userNameInput");
+        this.userEmojiInput = document.getElementById("userEmojiInput");
         this.statusMessage = document.getElementById("statusMessage");
         this.chatBox = document.getElementById("chatBox");
         this.messageInput = document.getElementById("messageInput");
@@ -363,6 +475,52 @@
         this.recordBtn.addEventListener("click", () => {
           this.toggleRecording();
         });
+      }
+
+      startChat() {
+        const name = this.sanitizeInput(this.userNameInput.value.trim());
+        const emoji = this.userEmojiInput.value;
+
+        // Validar nombre
+        if (!name || name.length > 20) {
+          alert("Por favor, ingresa un nombre válido (1-20 caracteres).");
+          return;
+        }
+
+        // Almacenar nombre y emoji
+        this.user1Name = name;
+        this.user1Emoji = emoji;
+
+        // Actualizar status-message
+        this.statusMessage.textContent = `Escribiendo como: ${this.user1Name}`;
+
+        // Ocultar modal y mostrar chat
+        this.userModal.style.display = "none";
+        this.chatContainer.classList.add("active");
+
+        // Enviar mensaje de saludo del Usuario 2
+        this.sendGreeting();
+      }
+
+      sendGreeting() {
+        const cont = document.createElement("div");
+        cont.className = "bubble-container user2";
+
+        const avatar = document.createElement("div");
+        avatar.className = "avatar";
+        avatar.textContent = this.user2Emoji;
+
+        const bubble = document.createElement("div");
+        bubble.className = "bubble user2";
+
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        bubble.innerHTML = `<span>¡Hola, ${this.user1Name}! ¿Cómo estás hoy?</span><span class="timestamp">${time}</span>`;
+
+        cont.appendChild(avatar);
+        cont.appendChild(bubble);
+
+        this.chatBox.appendChild(cont);
+        this.chatBox.scrollTop = this.chatBox.scrollHeight;
       }
 
       async startRecording() {
@@ -436,7 +594,7 @@
 
         const avatar = document.createElement("div");
         avatar.className = "avatar";
-        avatar.textContent = this.currentUser === 1 ? "😉" : "👽";
+        avatar.textContent = this.currentUser === 1 ? this.user1Emoji : this.user2Emoji;
 
         const bubble = document.createElement("div");
         bubble.className = `bubble user${this.currentUser}`;
@@ -488,7 +646,7 @@
 
           const avatar = document.createElement("div");
           avatar.className = "avatar";
-          avatar.textContent = this.currentUser === 1 ? "😉" : "👽";
+          avatar.textContent = this.currentUser === 1 ? this.user1Emoji : this.user2Emoji;
 
           const bubble = document.createElement("div");
           bubble.className = `bubble user${this.currentUser}`;
@@ -533,7 +691,7 @@
 
         const avatar = document.createElement("div");
         avatar.className = "avatar";
-        avatar.textContent = this.currentUser === 1 ? "😉" : "👽";
+        avatar.textContent = this.currentUser === 1 ? this.user1Emoji : this.user2Emoji;
 
         const bubble = document.createElement("div");
         bubble.className = `bubble user${this.currentUser}`;
@@ -572,7 +730,7 @@
       toggleUser() {
         this.currentUser = this.currentUser === 1 ? 2 : 1;
         this.statusMessage.textContent = this.currentUser === 1
-          ? "Escribiendo como: Yo"
+          ? `Escribiendo como: ${this.user1Name}`
           : "Escribiendo como: 👽";
         const isDark = this.chatContainer.classList.contains("dark");
         this.toggleIcon.src = isDark
@@ -588,6 +746,7 @@
 
       toggleSecret() {
         this.chatContainer.classList.toggle("dark");
+        this.modalContent.classList.toggle("dark");
         const isDark = this.chatContainer.classList.contains("dark");
         this.sendIcon.src = isDark
           ? "https://img.icons8.com/ios/50/ffffff/sent.png"

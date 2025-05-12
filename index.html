@@ -226,10 +226,13 @@
 
     .input-row {
       display: flex; align-items: center; gap: 8px;
+      flex-wrap: nowrap;
+      overflow: hidden;
     }
 
     input[type="text"] {
       flex: 1;
+      min-width: 0; /* Evita que el input empuje otros elementos */
       padding: 12px 16px;
       border-radius: 20px;
       border: 1px solid #ccc;
@@ -252,6 +255,7 @@
       padding: 8px;
       background: none; border: none;
       cursor: pointer;
+      flex-shrink: 0;
     }
     .send-btn img, .attach-btn img, .record-btn img, .toggle-btn img {
       width: 24px; height: 24px;
@@ -275,6 +279,19 @@
       .status-message { font-size: 0.8em; }
       .bubble.user1::after, .bubble.user2::after {
         bottom: 6px; /* Ajustar posición en pantallas pequeñas */
+      }
+      .input-row {
+        gap: 4px; /* Reducir espacio entre elementos */
+      }
+      .send-btn, .attach-btn, .record-btn, .toggle-btn {
+        padding: 6px; /* Reducir padding */
+      }
+      .send-btn img, .attach-btn img, .record-btn img, .toggle-btn img {
+        width: 20px; height: 20px; /* Reducir tamaño de íconos */
+      }
+      input[type="text"] {
+        padding: 10px 12px; /* Reducir padding del input */
+        font-size: 0.9em; /* Reducir tamaño de fuente */
       }
     }
   </style>
